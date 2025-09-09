@@ -12,6 +12,6 @@ to run:
 
 - docker run -d --name mongo -p 27017:27017 mongo
 
-uvicorn main:app --reload
+- uvicorn main:app --reload
 
 server at http://127.0.0.1:8000
