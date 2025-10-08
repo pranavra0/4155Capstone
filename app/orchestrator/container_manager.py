@@ -13,3 +13,6 @@ class ContainerManager:
         container = self.client.containers.get(container_id)
         container.stop()
         return True
+
+    def list_containers(self):
+        return self.client.containers.list(all=True)
