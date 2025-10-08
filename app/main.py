@@ -3,7 +3,14 @@ from api import containers, nodes, jobs
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db
 
+from orchestrator.container_manager import ContainerManager
+from orchestrator.node_manager import NodeManager
+from database import get_collection
+
 app = FastAPI(title="Container Orchestrator")
+
+cm = ContainerManager()
+nm = NodeManager()
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,4 +30,22 @@ async def startup_event():
 
 @app.get("/")
 def root():
-    return {"message": "FastAPI Link: http://127.0.0.1:8000/docs#/"}
+    return {
+        "message": "FastAPI API is working",
+        "docs": "http://127.0.0.1:8000/docs",
+        "routes": {
+            "containers": "/containers",
+            "nodes": "/nodes",
+            "jobs": "/jobs"
+        }
+    }
+
+@app.get("/status")
+def status():
+    jobs_collection = get_collection("jobs")
+    return {
+        "nodes_registered": len(nm.list_nodes()),
+        "jobs_total": jobs_collection.count_documents({}),
+        "containers_running": len(cm.client.containers.list())
+    }
+
