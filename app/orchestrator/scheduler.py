@@ -1,14 +1,13 @@
 import itertools
-from orchestrator.models import Job, Node
 import asyncio
 import uuid
-from typing import Dict
+from orchestrator.models import Job, Node
 
-
-class Scheduler: 
+class Scheduler:
     def __init__(self, strategy: str = "first_fit"):
         self.strategy = strategy
         self._rr_cycle = None
+        self.tasks = {}  # Track running async tasks
     
     def schedule_job(self, job, available_nodes: list[Node]) -> Node | None:
         if not available_nodes:
@@ -23,27 +22,28 @@ class Scheduler:
             return next(self._rr_cycle)
         
         elif self.strategy == "resource_aware":
-            # subject to change
             return max(available_nodes, key=lambda node: node.cpu)
-
+        
         else:
             raise ValueError(f"Unknown scheduling strategy: {self.strategy}")
-        
+    
     async def _run_async_job(self, job_id: str, job: Job, delay: int):
-        print(f"{job_id} started with this much delay = {delay})")
+        print(f"Task {job_id} started with a delay of {delay} seconds")
         await asyncio.sleep(delay)
-        print(f"{job_id} finished")
-        return f"Your job {job_id} completed after {delay} seconds"
-
+        print(f"Task {job_id} finished")
+        return f"Job {job_id} completed after {delay} seconds"
+    
     async def submit_job(self, job: Job, available_nodes: list[Node], delay: int = 3):
         node = self.schedule_job(job, available_nodes)
         if not node:
             return None, {"status": "no available nodes"}
+        
         job_id = str(uuid.uuid4())
         task = asyncio.create_task(self._run_async_job(job_id, job, delay))
         self.tasks[job_id] = task
+        
         return job_id, {"status": "scheduled", "node": node.name}
-
+    
     def get_status(self, job_id: str):
         task = self.tasks.get(job_id)
         if not task:
