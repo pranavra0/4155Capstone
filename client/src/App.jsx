@@ -1,21 +1,22 @@
-import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
+import ContainersPage from "./pages/ContainersPage";
+import NodesPage from "./pages/NodesPage";
+import JobsPage from "./pages/JobsPage";
 
-function App() {
-  const [message, setMessage] = useState("Loading...");
-
-  useEffect(() => {
-    fetch("http://localhost:8000/") 
-      .then(res => res.json())
-      .then(data => setMessage(data.message))
-      .catch(() => setMessage("Failed to connect to backend"));
-  }, []);
-
+export default function App() {
   return (
-    <div style={{ fontFamily: "sans-serif", textAlign: "center", marginTop: "3rem" }}>
-      <h1>React + FastAPI Orchestrator</h1>
-      <p>{message}</p>
-    </div>
+    <BrowserRouter>
+      <nav style={{ display: "flex", gap: 12, padding: 16, borderBottom: "1px solid #ddd" }}>
+        <Link to="/containers">Containers</Link>
+        <Link to="/nodes">Nodes</Link>
+        <Link to="/jobs">Jobs</Link>
+      </nav>
+      <Routes>
+        <Route path="/" element={<Navigate to="/containers" replace />} />
+        <Route path="/containers" element={<ContainersPage />} />
+        <Route path="/nodes" element={<NodesPage />} />
+        <Route path="/jobs" element={<JobsPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
-
-export default App;
