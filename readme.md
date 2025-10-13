@@ -3,7 +3,7 @@
 You must install docker desktop for this project
 
 
-to run: 
+to run frontend: 
 
 - cd into /app/
 - python -m venv venv
@@ -15,3 +15,10 @@ to run:
 - uvicorn main:app --reload
 
 server at http://127.0.0.1:8000
+
+
+to run backend:
+- cd into /client/
+- `npm install`
+- `npm run dev`
+view at http://localhost:5173
