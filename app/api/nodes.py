@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from orchestrator.node_manager import NodeManager
 from orchestrator.models import Node
 
@@ -8,10 +8,7 @@ nm = NodeManager()
 @router.post("/", response_model=Node)
 def register_node(node: Node):
     nm.register_node(node.id, {
-    "ip": node.ip,
-    "port": node.port,
-    "cpu": node.cpu,
-    "memory": node.memory
+        "ip": node.ip, "port": node.port, "cpu": node.cpu, "memory": node.memory
     })
     return node
 
@@ -20,14 +17,15 @@ def list_nodes():
     nodes = []
     for nid, spec in nm.list_nodes().items():
         nodes.append(Node(
-            id=nid,
-            ip=spec["ip"],
-            port=spec["port"],
-            cpu=spec["cpu"],
-            memory=spec["memory"],
-            status=spec.get("status", "unknown"),
-            last_seen=spec.get("last_seen"),
-            cpu_percent=spec.get("cpu_percent", 0),
-            memory_percent=spec.get("memory_percent", 0)
+            id=nid, ip=spec["ip"], port=spec["port"], cpu=spec["cpu"], memory=spec["memory"],
+            status=spec.get("status", "unknown"), last_seen=spec.get("last_seen"),
+            cpu_percent=spec.get("cpu_percent", 0), memory_percent=spec.get("memory_percent", 0)
         ))
     return nodes
+
+@router.delete("/{node_id}")
+def deregister_node(node_id: str):
+    deleted = nm.remove_node(node_id)
+    if deleted is None:
+        raise HTTPException(status_code=404, detail="Node not found")
+    return {"status": "deleted", "id": node_id}
