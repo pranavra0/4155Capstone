@@ -5,3 +5,12 @@ __pycache__/
 # Virtual environments
 venv/
 .venv/
+
+#node modules
+node_modulesapp/venv/
+__pycache__/
+*.pyc
+client/node_modules/
+client/dist/
+client/*.log
+client/.env
