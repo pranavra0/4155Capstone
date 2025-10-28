@@ -1,31 +1,81 @@
-from fastapi import APIRouter, HTTPException
-from orchestrator.node_manager import NodeManager
-from orchestrator.models import Node
+# app/api/nodes.py
+from __future__ import annotations
+
+from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel, Field
 
 router = APIRouter()
-nm = NodeManager()
 
-@router.post("/", response_model=Node)
-def register_node(node: Node):
-    nm.register_node(node.id, {
-        "ip": node.ip, "port": node.port, "cpu": node.cpu, "memory": node.memory
-    })
-    return node
 
-@router.get("/", response_model=list[Node])
-def list_nodes():
-    nodes = []
-    for nid, spec in nm.list_nodes().items():
-        nodes.append(Node(
-            id=nid, ip=spec["ip"], port=spec["port"], cpu=spec["cpu"], memory=spec["memory"],
-            status=spec.get("status", "unknown"), last_seen=spec.get("last_seen"),
-            cpu_percent=spec.get("cpu_percent", 0), memory_percent=spec.get("memory_percent", 0)
-        ))
-    return nodes
+class NodeIn(BaseModel):
+    id: str = Field(..., min_length=1)
+    ip: str
+    port: int
+    cpu: int
+    memory: int
 
-@router.delete("/{node_id}")
-def deregister_node(node_id: str):
-    deleted = nm.remove_node(node_id)
-    if deleted is None:
+
+def _serialize(node_id: str, node: dict) -> dict:
+    return {
+        "id": node_id,
+        "ip": node.get("ip"),
+        "port": node.get("port"),
+        "cpu": node.get("cpu"),
+        "memory": node.get("memory"),
+        "status": node.get("status"),
+        "last_seen": node.get("last_seen"),
+        "cpu_percent": node.get("cpu_percent"),
+        "memory_percent": node.get("memory_percent"),
+        "heartbeat_failures": node.get("heartbeat_failures", 0),
+        # diagnostics
+        "last_http_code": node.get("last_http_code"),
+        "last_error": node.get("last_error"),
+    }
+
+
+@router.get("/", summary="List nodes")
+def list_nodes(request: Request):
+    nm = request.app.state.nm
+    nodes = nm.list_nodes()    # refreshes status internally
+    return [_serialize(nid, n) for nid, n in nodes.items()]
+
+
+@router.get("/{node_id}", summary="Get node")
+def get_node(node_id: str, request: Request):
+    nm = request.app.state.nm
+    node = nm.get_node(node_id)
+    if not node:
         raise HTTPException(status_code=404, detail="Node not found")
-    return {"status": "deleted", "id": node_id}
+    return _serialize(node_id, node)
+
+
+@router.post("/", summary="Register/Update node")
+def register_node(body: NodeIn, request: Request):
+    nm = request.app.state.nm
+    nm.register_node(body.id, {
+        "ip": body.ip,
+        "port": body.port,
+        "cpu": body.cpu,
+        "memory": body.memory,
+    })
+    node = nm.get_node(body.id)
+    return _serialize(body.id, node)
+
+
+@router.post("/{node_id}/ping", summary="Force a heartbeat refresh and return diagnostics")
+def ping_node(node_id: str, request: Request):
+    nm = request.app.state.nm
+    node = nm.nodes.get(node_id)
+    if not node:
+        raise HTTPException(status_code=404, detail="Node not found")
+    nm._refresh_node_status(node_id, node, reason="manual-ping")
+    return _serialize(node_id, node)
+
+
+@router.delete("/{node_id}", summary="Remove node")
+def delete_node(node_id: str, request: Request):
+    nm = request.app.state.nm
+    removed = nm.remove_node(node_id)
+    if removed is None:
+        raise HTTPException(status_code=404, detail="Node not found")
+    return {"status": "removed", "id": node_id}
