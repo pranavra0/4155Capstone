@@ -4,7 +4,6 @@ const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 async function http(path, init) {
   const res = await fetch(`${API_URL}${path}`, {
     headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
-    credentials: "include",
     ...init,
   });
   if (!res.ok) {

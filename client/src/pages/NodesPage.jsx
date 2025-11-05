@@ -16,7 +16,12 @@ export default function NodesPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    refresh();
+    // Auto-refresh every 5 seconds to show node status changes
+    const interval = setInterval(refresh, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const set = (k) => (e) =>
     setForm({ ...form, [k]: ["port", "cpu", "memory"].includes(k) ? Number(e.target.value) : e.target.value });

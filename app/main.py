@@ -1,43 +1,69 @@
-import psutil
+# app/main.py
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import containers, nodes, jobs
-from database import init_db
-from orchestrator.node_manager import NodeManager
-from datetime import datetime
+from api import nodes, containers, jobs
+from orchestrator import node_manager, container_manager
 
 
-app = FastAPI(title="Container Orchestrator")
-nm = NodeManager()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage startup and shutdown events"""
+    # Startup
+    print("🚀 Starting orchestrator...")
 
+    # Initialize database
+    from database import init_db
+    init_db()
+    print("✅ Database initialized")
+
+    node_manager.start_monitoring()
+    print("✅ Node monitoring started")
+
+    yield
+
+    # Shutdown
+    print("🛑 Shutting down orchestrator...")
+    await node_manager.shutdown()
+    container_manager.shutdown()
+    print("✅ Cleanup complete")
+
+
+app = FastAPI(
+    title="Container Orchestrator",
+    description="Distributed container orchestration system",
+    version="1.0.0",
+    lifespan=lifespan,
+    redirect_slashes=False
+)
+
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(containers.router, prefix="/containers", tags=["containers"])
+# Include routers
 app.include_router(nodes.router, prefix="/nodes", tags=["nodes"])
+app.include_router(containers.router, prefix="/containers", tags=["containers"])
 app.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 
-@app.on_event("startup")
-async def startup_event():
-    init_db()
-    nm.start_monitoring()
 
 @app.get("/")
 def root():
-    return {"message": "API is running"}
+    return {
+        "message": "Container Orchestrator API",
+        "docs": "/docs",
+        "health": "/health"
+    }
+
 
 @app.get("/health")
 def health():
-    cpu_percent = psutil.cpu_percent(interval=0.5)
-    memory = psutil.virtual_memory()
     return {
         "status": "ok",
-        "timestamp": datetime.utcnow().isoformat(),
-        "cpu_percent": cpu_percent,
-        "memory_percent": memory.percent,
+        "nodes": len(node_manager.list_nodes()),
     }
