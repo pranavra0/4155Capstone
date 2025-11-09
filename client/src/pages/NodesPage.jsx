@@ -18,13 +18,15 @@ export default function NodesPage() {
 
   useEffect(() => {
     refresh();
-    // Auto-refresh every 5 seconds to show node status changes
     const interval = setInterval(refresh, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  const set = (k) => (e) =>
-    setForm({ ...form, [k]: ["port", "cpu", "memory"].includes(k) ? Number(e.target.value) : e.target.value });
+  const setField = (k) => (e) =>
+    setForm({
+      ...form,
+      [k]: ["port", "cpu", "memory"].includes(k) ? Number(e.target.value) : e.target.value,
+    });
 
   const onCreate = async (e) => {
     e.preventDefault();
@@ -40,29 +42,45 @@ export default function NodesPage() {
   };
 
   return (
-    <div style={{ padding: 16 }}>
+    // The inline style with the fontFamily override is now gone
+    <div className="page-container">
       <h2>Nodes</h2>
-      <form onSubmit={onCreate} style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr) auto", gap: 8, marginBottom: 16 }}>
-        <input placeholder="id" value={form.id} onChange={set("id")} />
-        <input placeholder="ip" value={form.ip} onChange={set("ip")} />
-        <input placeholder="port" type="number" value={form.port} onChange={set("port")} />
-        <input placeholder="cpu" type="number" value={form.cpu} onChange={set("cpu")} />
-        <input placeholder="memory" type="number" value={form.memory} onChange={set("memory")} />
-        <button>Add</button>
+
+      {/* This form uses the .form-grid class */}
+      <form onSubmit={onCreate} className="form-grid">
+        <input placeholder="ID" value={form.id} onChange={setField("id")} className="input" />
+        <input placeholder="IP" value={form.ip} onChange={setField("ip")} className="input" />
+        <input placeholder="Port" type="number" value={form.port} onChange={setField("port")} className="input" />
+        <input placeholder="CPU" type="number" value={form.cpu} onChange={setField("cpu")} className="input" />
+        <input placeholder="Memory" type="number" value={form.memory} onChange={setField("memory")} className="input" />
+        <button type="submit" className="button">
+          Add
+        </button>
       </form>
 
-      {err && <div style={{ color: "crimson", marginBottom: 8 }}>{String(err)}</div>}
+      {err && <div className="error">{err}</div>}
+
       {loading ? (
-        <div>Loading…</div>
+        <div className="loading-text">Loading…</div>
       ) : (
-        <ul style={{ display: "grid", gap: 8 }}>
+        <div className="card-list">
           {nodes.map((n) => (
-            <li key={n.id} style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <code>{n.id}</code> — {n.ip}:{n.port} — CPU {n.cpu} — MEM {n.memory} — {n.status ?? "unknown"}
-              <button onClick={() => onDelete(n.id)}>Delete</button>
-            </li>
+            <div key={n.id} className="card">
+              <div className="card-info">
+                <code className="card-id">{n.id}</code>
+                <div className="card-main">{n.ip}:{n.port}</div>
+                <div className="card-sub">CPU {n.cpu} — MEM {n.memory}</div>
+              </div>
+              <div className="card-status">{n.status ?? "unknown"}</div>
+              <button
+                onClick={() => onDelete(n.id)}
+                className="button button-danger button-sm"
+              >
+                Delete
+              </button>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

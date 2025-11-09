@@ -21,37 +21,65 @@ export default function JobsPage() {
   const onCreate = async (e) => {
     e.preventDefault();
     setErr(null);
-    try { await api.createJob(form); setForm({ id: "", image: "", status: "pending" }); refresh(); }
-    catch (e) { setErr(e.message); }
+    try {
+      await api.createJob(form);
+      setForm({ id: "", image: "", status: "pending" });
+      refresh();
+    } catch (e) {
+      setErr(String(e.message || e));
+    }
   };
 
   const onDelete = async (id) => {
     setErr(null);
     try { await api.deleteJob(id); refresh(); }
-    catch (e) { setErr(e.message); }
+    catch (e) { setErr(String(e.message || e)); }
   };
 
   return (
-    <div style={{ padding: 16 }}>
+    <div className="page-container">
       <h2>Jobs</h2>
-      <form onSubmit={onCreate} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <input placeholder="id" value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} />
-        <input placeholder="image" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} />
-        <button>Submit</button>
+
+      <form onSubmit={onCreate} className="form">
+        <input
+          placeholder="Job ID"
+          value={form.id}
+          onChange={(e) => setForm({ ...form, id: e.target.value })}
+          className="input"
+        />
+        <input
+          placeholder="Image"
+          value={form.image}
+          onChange={(e) => setForm({ ...form, image: e.target.value })}
+          className="input input-lg"
+        />
+        <button type="submit" className="button">
+          Submit
+        </button>
       </form>
 
-      {err && <div style={{ color: "crimson", marginBottom: 8 }}>{String(err)}</div>}
+      {err && <div className="error">{err}</div>}
+
       {loading ? (
-        <div>Loading…</div>
+        <div className="loading-text">Loading…</div>
       ) : (
-        <ul style={{ display: "grid", gap: 8 }}>
+        <div className="card-list">
           {jobs.map((j) => (
-            <li key={j.id} style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <code>{j.id}</code> — {j.image} — {j.status ?? "pending"}
-              <button onClick={() => onDelete(j.id)}>Delete</button>
-            </li>
+            <div key={j.id} className="card">
+              <div className="card-info">
+                <code className="card-id">{j.id}</code>
+                <div className="card-main">{j.image}</div>
+                <div className="card-sub">{j.status ?? "pending"}</div>
+              </div>
+              <button
+                onClick={() => onDelete(j.id)}
+                className="button button-danger button-sm"
+              >
+                Delete
+              </button>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

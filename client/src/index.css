@@ -1,68 +1,198 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
+html, body {
+  font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* You can define these CSS variables in :root if you want */
+  /* background-color: var(--bg-color); */
+  /* color: var(--text-color); */
+  background-color: #f8f9fa; /* Added a light default bg */
+  color: #202124;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* --- Headings --- */
+h2 {
+  margin-bottom: 16px;
+  margin-top: 0; 
 }
 
-button {
+/* --- Forms --- */
+.form {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr) auto;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.input {
+  padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
+  border: 1px solid #ccc;
   font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  font-size: 14px;
+  flex: 1 1 150px;
+  min-width: 120px;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+.input-lg {
+  flex: 1 1 200px;
+}
+
+/* --- Buttons --- */
+.button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  background-color: #1a73e8;
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-family: inherit;
+}
+
+.button:hover {
+  background-color: #1669c1;
+}
+
+.button-danger {
+  background-color: #d93025;
+}
+
+.button-danger:hover {
+  background-color: #b1231b;
+}
+
+.button-sm {
+  padding: 8px 14px;
+}
+
+/* --- Error messages --- */
+.error {
+  color: #d93025;
+  margin-bottom: 16px;
+  font-weight: 500;
+  background-color: #fce8e6;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+/* --- Cards / list items --- */
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  background-color: #fff;
+  color: #202124;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-info {
+  flex: 1 1 200px;
+  min-width: 150px;
+}
+
+.card-id {
+  font-family: 'monospace'; /* for Ids */
+  font-size: 12px;
+  color: #5f6368;
+}
+
+.card-main {
+  font-weight: 500;
+}
+
+.card-sub {
+  font-size: 14px;
+  color: #5f6368;
+}
+
+.card-status {
+  opacity: 0.7;
+  min-width: 80px;
+}
+
+/* --- Page container --- */
+.page-container {
+  padding: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* --- App Header --- */
+.app-header {
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  height: 64px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background-color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.app-header-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-right: 32px;
+  color: #202124;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.app-header-nav {
+  display: flex;
+  gap: 12px;
+}
+
+/* --- NavItem --- */
+.nav-item {
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  color: #5f6368;
+  background-color: transparent;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* Style for the active link */
+.nav-item.active {
+  color: #1a73e8;
+  background-color: rgba(26, 115, 232, 0.1);
+}
+
+/* Hover style only for non-active links */
+.nav-item:not(.active):hover {
+  background-color: rgba(95, 99, 104, 0.08);
+}
+
+/* --- Page helpers --- */
+.loading-text {
+  font-size: 16px;
+  padding: 24px 0;
+  color: #5f6368;
+  font-weight: 500;
+}
+
+.card-list {
+  display: grid;
+  gap: 16px;
 }

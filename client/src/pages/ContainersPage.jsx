@@ -12,7 +12,6 @@ export default function ContainersPage() {
   const refresh = () => {
     setLoading(true);
     setErr(null);
-    // list only running containers to avoid exited clutter
     api
       .listContainers(false)
       .then(setItems)
@@ -46,35 +45,50 @@ export default function ContainersPage() {
   };
 
   return (
-    <div style={{ padding: 16 }}>
+    <div className="page-container">
       <h2>Containers</h2>
 
-      <form onSubmit={onCreate} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+      <form onSubmit={onCreate} className="form">
         <input
           value={image}
           onChange={(e) => setImage(e.target.value)}
-          placeholder="image (e.g. nginx:latest)"
+          placeholder="Image (e.g. nginx:latest)"
+          className="input input-lg"
         />
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="name (optional)" />
-        <button type="submit">Start</button>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Name (optional)"
+          className="input"
+        />
+        <button type="submit" className="button">
+          Start
+        </button>
       </form>
 
-      {err && <div style={{ color: "crimson", marginBottom: 8 }}>{err}</div>}
+      {err && <div className="error">{err}</div>}
 
       {loading ? (
-        <div>Loading…</div>
+        <div className="loading-text">Loading…</div>
       ) : (
-        <ul style={{ display: "grid", gap: 8 }}>
+        <div className="card-list">
           {items.map((c) => (
-            <li key={c.id} style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <code>{c.id?.slice(0, 12) ?? ""}</code>
-              <span>{c.name ?? "(no name)"}</span>
-              <span>{c.image ?? ""}</span>
-              <span style={{ opacity: 0.7 }}>{c.status ?? ""}</span>
-              <button onClick={() => onDelete(c.id)}>Stop/Delete</button>
-            </li>
+            <div key={c.id} className="card">
+              <div className="card-info">
+                <code className="card-id">{c.id?.slice(0, 12)}</code>
+                <div className="card-main">{c.name ?? "(no name)"}</div>
+                <div className="card-sub">{c.image ?? ""}</div>
+              </div>
+              <div className="card-status">{c.status ?? ""}</div>
+              <button
+                onClick={() => onDelete(c.id)}
+                className="button button-danger button-sm"
+              >
+                Stop/Delete
+              </button>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
