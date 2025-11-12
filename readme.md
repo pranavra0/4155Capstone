@@ -1,4 +1,4 @@
-# this is boilerplate all subject to change! 
+How to Run
 
 You must install docker desktop for this project
 
