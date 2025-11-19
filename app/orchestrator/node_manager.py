@@ -2,6 +2,7 @@
 import asyncio
 from datetime import datetime
 import httpx
+from database import get_collection
 
 
 class NodeManager:
@@ -9,6 +10,27 @@ class NodeManager:
         self.nodes = {}
         self._monitor_task = None
         self._client = None
+        self._load_nodes_from_db()
+
+    def _load_nodes_from_db(self):
+        """Load nodes from MongoDB on startup"""
+        try:
+            nodes_collection = get_collection("nodes")
+            for node_doc in nodes_collection.find({}):
+                node_id = node_doc["id"]
+                self.nodes[node_id] = {
+                    "ip": node_doc["ip"],
+                    "port": node_doc["port"],
+                    "cpu": node_doc["cpu"],
+                    "memory": node_doc["memory"],
+                    "status": "unknown",
+                    "cpu_percent": None,
+                    "memory_percent": None,
+                    "last_seen": None,
+                }
+            print(f"Loaded {len(self.nodes)} nodes from database")
+        except Exception as e:
+            print(f"Error loading nodes from database: {e}")
 
     async def _get_client(self):
         """Lazy initialize httpx client"""
@@ -31,6 +53,23 @@ class NodeManager:
             "memory_percent": None,
             "last_seen": None,
         }
+
+        # Persist to database
+        try:
+            nodes_collection = get_collection("nodes")
+            nodes_collection.update_one(
+                {"id": node_id},
+                {"$set": {
+                    "id": node_id,
+                    "ip": info["ip"],
+                    "port": info["port"],
+                    "cpu": info["cpu"],
+                    "memory": info["memory"]
+                }},
+                upsert=True
+            )
+        except Exception as e:
+            print(f"Error saving node to database: {e}")
 
     async def _refresh_node_status(self, node_id: str, node: dict):
         """
@@ -91,7 +130,17 @@ class NodeManager:
 
     def remove_node(self, node_id: str):
         """Remove a node by ID."""
-        return self.nodes.pop(node_id, None)
+        node = self.nodes.pop(node_id, None)
+
+        # Remove from database
+        if node:
+            try:
+                nodes_collection = get_collection("nodes")
+                nodes_collection.delete_one({"id": node_id})
+            except Exception as e:
+                print(f"Error removing node from database: {e}")
+
+        return node
 
     async def _monitor_nodes_loop(self):
         """

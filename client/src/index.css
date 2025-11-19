@@ -1,5 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
+:root {
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #fff;
+  --text-primary: #202124;
+  --text-secondary: #5f6368;
+  --border-color: #ccc;
+  --shadow: rgba(0,0,0,0.1);
+  --error-bg: #fce8e6;
+  --error-text: #d93025;
+}
+
+html.dark-mode {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0a6;
+  --border-color: #5f6368;
+  --shadow: rgba(0,0,0,0.4);
+  --error-bg: #5c2323;
+  --error-text: #f28b82;
+}
+
 html, body {
   font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   margin: 0;
@@ -7,11 +29,9 @@ html, body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* You can define these CSS variables in :root if you want */
-  /* background-color: var(--bg-color); */
-  /* color: var(--text-color); */
-  background-color: #f8f9fa; /* Added a light default bg */
-  color: #202124;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s, color 0.3s;
 }
 
 /* --- Headings --- */
@@ -39,11 +59,13 @@ h2 {
 .input {
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   font-family: inherit;
   font-size: 14px;
   flex: 1 1 150px;
   min-width: 120px;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .input-lg {
@@ -81,10 +103,10 @@ h2 {
 
 /* --- Error messages --- */
 .error {
-  color: #d93025;
+  color: var(--error-text);
   margin-bottom: 16px;
   font-weight: 500;
-  background-color: #fce8e6;
+  background-color: var(--error-bg);
   padding: 12px;
   border-radius: 8px;
 }
@@ -96,9 +118,9 @@ h2 {
   justify-content: space-between;
   padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  background-color: #fff;
-  color: #202124;
+  box-shadow: 0 2px 6px var(--shadow);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
   flex-wrap: wrap;
   gap: 8px;
 }
@@ -109,9 +131,9 @@ h2 {
 }
 
 .card-id {
-  font-family: 'monospace'; /* for Ids */
+  font-family: 'monospace';
   font-size: 12px;
-  color: #5f6368;
+  color: var(--text-secondary);
 }
 
 .card-main {
@@ -120,7 +142,7 @@ h2 {
 
 .card-sub {
   font-size: 14px;
-  color: #5f6368;
+  color: var(--text-secondary);
 }
 
 .card-status {
@@ -139,27 +161,45 @@ h2 {
 .app-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0 24px;
   height: 64px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  background-color: #fff;
+  box-shadow: 0 2px 4px var(--shadow);
+  background-color: var(--bg-secondary);
   position: sticky;
   top: 0;
   z-index: 1000;
 }
 
-.app-header-title {
-  font-size: 20px;
-  font-weight: 600;
-  margin-right: 32px;
-  color: #202124;
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-.app-header-nav {
+.app-header-nav-left,
+.app-header-nav-right {
   display: flex;
   gap: 12px;
+}
+
+.app-header-nav-left {
+  justify-content: flex-end;
+  flex: 1;
+}
+
+.app-header-nav-right {
+  justify-content: flex-start;
+  flex: 1;
+}
+
+.app-header-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0 48px;
+}
+
+.logo-image {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  max-width: 200px;
 }
 
 /* --- NavItem --- */
@@ -168,18 +208,16 @@ h2 {
   border-radius: 8px;
   text-decoration: none;
   font-weight: 500;
-  color: #5f6368;
+  color: var(--text-secondary);
   background-color: transparent;
   transition: background-color 0.2s, color 0.2s;
 }
 
-/* Style for the active link */
 .nav-item.active {
   color: #1a73e8;
   background-color: rgba(26, 115, 232, 0.1);
 }
 
-/* Hover style only for non-active links */
 .nav-item:not(.active):hover {
   background-color: rgba(95, 99, 104, 0.08);
 }
@@ -188,7 +226,7 @@ h2 {
 .loading-text {
   font-size: 16px;
   padding: 24px 0;
-  color: #5f6368;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 

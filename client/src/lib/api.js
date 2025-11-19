@@ -46,4 +46,12 @@ export const api = {
     }),
 
   deleteJob: (id) => http(`/jobs/${id}`, { method: "DELETE" }),
+
+  getSchedulerSettings: () => http(`/settings/scheduler`),
+
+  updateSchedulerSettings: ({ strategy }) =>
+    http(`/settings/scheduler`, {
+      method: "PUT",
+      body: JSON.stringify({ strategy }),
+    }),
 };

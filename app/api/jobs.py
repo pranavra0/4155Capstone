@@ -43,6 +43,7 @@ async def submit_job(job: Job):
     target_node = scheduler.schedule_job(job, available_nodes)
 
     if target_node:
+        job.node_id = target_node.id
         # Deploy container to remote node
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -97,13 +98,32 @@ async def get_job(job_id: str):
 
 @router.delete("/{job_id}")
 async def delete_job(job_id: str):
-    """Delete a job"""
+    """Delete a job and its container"""
     jobs_collection = get_collection("jobs")
-    
+
+    # First, get the job to find which node it's on
     loop = asyncio.get_event_loop()
-    res = await loop.run_in_executor(None, lambda: jobs_collection.delete_one({"id": job_id}))
-    
-    if res.deleted_count == 0:
+    job = await loop.run_in_executor(None, lambda: jobs_collection.find_one({"id": job_id}))
+
+    if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
-    
+
+    # If job has a node_id and is running, delete the container from the agent
+    if job.get("node_id") and job.get("status") == "running":
+        nodes_dict = await node_manager.list_nodes_async()
+        node_spec = nodes_dict.get(job["node_id"])
+
+        if node_spec and node_spec.get("status") == "online":
+            try:
+                container_name = f"job-{job_id}"
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    url = f"http://{node_spec['ip']}:{node_spec['port']}/containers/{container_name}"
+                    await client.delete(url)
+            except Exception as e:
+                print(f"Warning: Failed to delete container for job {job_id}: {e}")
+                # Continue with job deletion even if container deletion fails
+
+    # Delete job from database
+    res = await loop.run_in_executor(None, lambda: jobs_collection.delete_one({"id": job_id}))
+
     return {"status": "deleted", "id": job_id}

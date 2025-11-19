@@ -2,7 +2,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import nodes, containers, jobs
+from api import nodes, containers, jobs, settings
 from orchestrator import node_manager, container_manager
 
 
@@ -50,6 +50,7 @@ app.add_middleware(
 app.include_router(nodes.router, prefix="/nodes", tags=["nodes"])
 app.include_router(containers.router, prefix="/containers", tags=["containers"])
 app.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
+app.include_router(settings.router, prefix="/settings", tags=["settings"])
 
 
 @app.get("/")

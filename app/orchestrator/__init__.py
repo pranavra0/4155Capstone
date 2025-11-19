@@ -6,4 +6,4 @@ from .scheduler import Scheduler
 # Create singleton instances to share across all API routes
 node_manager = NodeManager()
 container_manager = ContainerManager()
-scheduler = Scheduler()
+scheduler = Scheduler(strategy="round_robin")  # Distribute jobs evenly across nodes
