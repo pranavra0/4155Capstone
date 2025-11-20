@@ -106,7 +106,21 @@ class ContainerManager:
     def stop_container(self, container_id: str, remove: bool = True):
         client = self._client_or_raise()
 
+        # IMPORTANT: Protect critical infrastructure containers from deletion
+        PROTECTED_CONTAINERS = ["mongo"]
+
         if self._use_subprocess:
+            # Check if container is protected
+            try:
+                container_info = client.containers_get(container_id)
+                container_name = getattr(container_info, "name", "").lower()
+                if any(protected in container_name for protected in PROTECTED_CONTAINERS):
+                    raise APIError(f"Cannot stop/remove protected container: {container_name}")
+            except NotFound:
+                raise
+            except APIError:
+                raise
+
             try:
                 client.containers_stop(container_id, timeout=5)
             except Exception:
@@ -122,6 +136,11 @@ class ContainerManager:
                 c = client.containers.get(container_id)
             except NotFound:
                 raise
+
+            # Check if container is protected
+            container_name = getattr(c, "name", "").lower()
+            if any(protected in container_name for protected in PROTECTED_CONTAINERS):
+                raise APIError(f"Cannot stop/remove protected container: {container_name}")
 
             try:
                 c.stop(timeout=5)

@@ -13,7 +13,6 @@ class NodeManager:
         self._load_nodes_from_db()
 
     def _load_nodes_from_db(self):
-        """Load nodes from MongoDB on startup"""
         try:
             nodes_collection = get_collection("nodes")
             for node_doc in nodes_collection.find({}):
@@ -54,7 +53,6 @@ class NodeManager:
             "last_seen": None,
         }
 
-        # Persist to database
         try:
             nodes_collection = get_collection("nodes")
             nodes_collection.update_one(
