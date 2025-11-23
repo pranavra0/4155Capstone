@@ -35,7 +35,7 @@ export default function ContainersPage() {
     <div className="page-container">
       <h2>Containers {fetching && <span style={{fontSize: '0.7em', color: '#888'}}>(refreshing...)</span>}</h2>
       <p style={{fontSize: '0.9em', color: '#666', marginBottom: '1rem'}}>
-        All containers across orchestrator and agent nodes.
+        Job containers running on agent nodes.
       </p>
 
       {err && <div className="error">{err}</div>}

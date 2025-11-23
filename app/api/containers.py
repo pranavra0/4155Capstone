@@ -7,7 +7,7 @@ from docker.errors import APIError, NotFound
 
 from orchestrator.container_manager import DockerUnavailable
 from orchestrator import container_manager
-from orchestrator.db import nodes_col
+from database import get_collection
 
 router = APIRouter()
 
@@ -58,7 +58,7 @@ async def list_containers(all: bool = Query(True, description="Include stopped/e
         pass
 
     # Get containers from all registered nodes
-    nodes = list(nodes_col.find())
+    nodes = list(get_collection("nodes").find())
     async with httpx.AsyncClient(timeout=5.0) as client:
         for node in nodes:
             try:
