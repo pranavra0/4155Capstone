@@ -1,6 +1,7 @@
 # agent.py (run this on each worker node)
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Query, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import psutil
 import socket
 from orchestrator.container_manager import ContainerManager, DockerUnavailable
@@ -16,6 +17,16 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Node Agent", lifespan=lifespan)
+
+# Enable CORS for auto-detect feature from frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 cm = ContainerManager()
 
 
