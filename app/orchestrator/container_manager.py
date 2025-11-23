@@ -32,19 +32,15 @@ class ContainerManager:
 
     def _client_or_raise(self):
         if self._client is None:
-            # On Windows, try subprocess method first (doesn't require TLS settings)
-            if platform.system() == "Windows":
-                try:
-                    cli = DockerSubprocessClient()
-                    if cli.ping():
-                        self._client = cli
-                        self._use_subprocess = True
-                        print("Using Docker CLI subprocess (no TLS configuration needed)")
-                        return self._client
-                except Exception:
-                    pass
-
-            # Fall back to SDK if available and not Windows
+            try:
+                cli = DockerSubprocessClient()
+                if cli.ping():
+                    self._client = cli
+                    self._use_subprocess = True
+                    print("Using Docker CLI subprocess")
+                    return self._client
+            except Exception:
+                pass
             if DOCKER_SDK_AVAILABLE:
                 try:
                     if platform.system() == "Windows":
