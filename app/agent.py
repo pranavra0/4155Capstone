@@ -22,11 +22,14 @@ cm = ContainerManager()
 @app.get("/health")
 def health():
     """Health check endpoint - reports node status"""
+    mem = psutil.virtual_memory()
     return {
         "hostname": socket.gethostname(),
         "status": "ok",
         "cpu_percent": psutil.cpu_percent(interval=0.2),
-        "memory_percent": psutil.virtual_memory().percent
+        "memory_percent": mem.percent,
+        "cpu_count": psutil.cpu_count(),
+        "memory_total_mb": round(mem.total / (1024 * 1024))
     }
 
 
