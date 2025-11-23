@@ -125,7 +125,15 @@ class DockerSubprocessClient:
             cmd.extend(['--name', name])
         cmd.append(image)
         if command:
-            cmd.extend(['sh', '-c', command])
+            # Use appropriate interpreter based on image
+            if 'python' in image:
+                cmd.extend(['python', '-c', command])
+            elif 'node' in image:
+                cmd.extend(['node', '-e', command])
+            elif 'ruby' in image:
+                cmd.extend(['ruby', '-e', command])
+            else:
+                cmd.extend(['sh', '-c', command])
 
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         if result.returncode != 0:
