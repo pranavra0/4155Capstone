@@ -81,12 +81,12 @@ class ContainerManager:
         else:
             return client.containers.get(container_id)
 
-    def start_container(self, image: str, name: str | None = None):
+    def start_container(self, image: str, name: str | None = None, command: str | None = None):
         client = self._client_or_raise()
         if self._use_subprocess:
-            c = client.containers_run(image=image, name=name, detach=True)
+            c = client.containers_run(image=image, name=name, command=command, detach=True)
         else:
-            c = client.containers.run(image=image, name=name, detach=True)
+            c = client.containers.run(image=image, name=name, command=command, detach=True)
             try:
                 c.reload()
             except Exception:
@@ -173,10 +173,10 @@ class ContainerManager:
             container_id
         )
 
-    async def start_container_async(self, image: str, name: str | None = None):
+    async def start_container_async(self, image: str, name: str | None = None, command: str | None = None):
         """Async version - runs blocking call in thread pool"""
         loop = asyncio.get_event_loop()
-        func = partial(self.start_container, image=image, name=name)
+        func = partial(self.start_container, image=image, name=name, command=command)
         return await loop.run_in_executor(self._executor, func)
 
     async def stop_container_async(self, container_id: str, remove: bool = True):

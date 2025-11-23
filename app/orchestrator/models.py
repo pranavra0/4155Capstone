@@ -23,3 +23,4 @@ class Job(BaseModel):
     image: str
     status: str
     node_id: Optional[str] = None
+    command: Optional[str] = None  

@@ -4,7 +4,7 @@ import { api } from "../lib/api";
 export default function JobsPage() {
   const [jobs, setJobs] = useState([]);
   const [nodes, setNodes] = useState([]);
-  const [form, setForm] = useState({ image: "nginx" });
+  const [form, setForm] = useState({ image: "python:3.11-slim", command: "" });
   const [err, setErr] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -41,8 +41,13 @@ export default function JobsPage() {
     try {
       // Auto-generate unique job ID
       const jobId = `job-${Date.now()}`;
-      await api.createJob({ id: jobId, image: form.image, status: "pending" });
-      setForm({ image: "" });
+      await api.createJob({
+        id: jobId,
+        image: form.image,
+        command: form.command || null,
+        status: "pending"
+      });
+      setForm({ image: "python:3.11-slim", command: "" });
       refresh();
     } catch (e) {
       setErr(String(e.message || e));
@@ -73,18 +78,27 @@ export default function JobsPage() {
         </p>
       )}
 
-      <form onSubmit={onCreate} className="form">
+      <form onSubmit={onCreate} className="form" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
         <input
-          placeholder="Docker Image (e.g., nginx, redis, mongo)"
+          placeholder="Docker Image (e.g., python:3.11-slim, node:18, ubuntu)"
           value={form.image}
           onChange={(e) => setForm({ ...form, image: e.target.value })}
           className="input input-lg"
           required
         />
+        <input
+          placeholder="Command (e.g., python -c 'print(123)')"
+          value={form.command}
+          onChange={(e) => setForm({ ...form, command: e.target.value })}
+          className="input input-lg"
+        />
         <button type="submit" className="button" disabled={onlineNodes.length === 0 || submitting}>
           {submitting ? "Submitting..." : "Submit Job"}
         </button>
       </form>
+      <p style={{fontSize: '0.85em', color: '#666', marginTop: '0.5rem'}}>
+        Leave command empty to use image's default entrypoint
+      </p>
 
       {err && <div className="error">{err}</div>}
 
@@ -97,6 +111,11 @@ export default function JobsPage() {
               <div className="card-info">
                 <code className="card-id">{j.id}</code>
                 <div className="card-main">{j.image}</div>
+                {j.command && (
+                  <div className="card-sub" style={{fontFamily: 'monospace', fontSize: '0.8em'}}>
+                    $ {j.command}
+                  </div>
+                )}
                 <div className="card-sub">
                   {j.status ?? "pending"} {j.node_id && `→ ${j.node_id}`}
                 </div>

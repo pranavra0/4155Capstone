@@ -48,7 +48,10 @@ async def submit_job(job: Job):
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 url = f"http://{target_node.ip}:{target_node.port}/containers"
-                resp = await client.post(url, params={"image": job.image, "name": f"job-{job.id}"})
+                params = {"image": job.image, "name": f"job-{job.id}"}
+                if job.command:
+                    params["command"] = job.command
+                resp = await client.post(url, params=params)
 
                 if resp.status_code == 200:
                     job.status = "running"

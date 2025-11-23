@@ -63,14 +63,17 @@ class DockerSubprocessClient:
         })()
         return container
 
-    def containers_run(self, image, name=None, detach=True):
-        """Start a container"""
+    def containers_run(self, image, name=None, command=None, detach=True):
+        """Start a container with optional command"""
         cmd = ['docker', 'run']
         if detach:
             cmd.append('-d')
         if name:
             cmd.extend(['--name', name])
         cmd.append(image)
+        # Add command at the end if provided
+        if command:
+            cmd.extend(command.split())
 
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         if result.returncode != 0:

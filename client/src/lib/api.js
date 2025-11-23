@@ -39,10 +39,10 @@ export const api = {
   // ========= JOBS (JSON body) =========
   listJobs: () => http(`/jobs`),
 
-  createJob: ({ id, image, status = "pending" }) =>
+  createJob: ({ id, image, command = null, status = "pending" }) =>
     http(`/jobs`, {
       method: "POST",
-      body: JSON.stringify({ id, image, status }),
+      body: JSON.stringify({ id, image, command, status }),
     }),
 
   deleteJob: (id) => http(`/jobs/${id}`, { method: "DELETE" }),

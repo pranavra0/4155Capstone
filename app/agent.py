@@ -47,11 +47,12 @@ def health():
 @app.post("/containers")
 async def create_container(
     image: str = Query(..., description="Docker image"),
-    name: str = Query(None, description="Container name")
+    name: str = Query(None, description="Container name"),
+    command: str = Query(None, description="Command to run in container")
 ):
     """Create and start a container on this node"""
     try:
-        result = await cm.start_container_async(image=image, name=name)
+        result = await cm.start_container_async(image=image, name=name, command=command)
         return result
     except DockerUnavailable as e:
         raise HTTPException(status_code=503, detail=str(e))
