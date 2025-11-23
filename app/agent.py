@@ -61,10 +61,10 @@ async def create_container(
 
 
 @app.get("/containers")
-async def list_containers():
+async def list_containers(all: bool = Query(True, description="Include stopped/exited containers")):
     """List containers on this node"""
     try:
-        containers = await cm.list_containers_async(all=False)
+        containers = await cm.list_containers_async(all=all)
         return [
             {
                 "id": c.id,
