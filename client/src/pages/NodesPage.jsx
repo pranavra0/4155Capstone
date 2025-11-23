@@ -72,7 +72,7 @@ export default function NodesPage() {
     }
     setErr(null);
     try {
-      const response = await fetch(`http://${form.ip}:${form.port}/health`);
+      const response = await fetch(`http://${form.ip.trim()}:${form.port}/health`);
       if (!response.ok) throw new Error("Agent not reachable");
       const data = await response.json();
       setForm(prev => ({
@@ -89,7 +89,7 @@ export default function NodesPage() {
     e.preventDefault();
     setErr(null);
     try {
-      await api.createNode(form);
+      await api.createNode({ ...form, ip: form.ip.trim() });
       formTouched.current = false;
       refresh();
     }
