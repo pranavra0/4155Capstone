@@ -82,4 +82,8 @@ async def delete_container(container_id: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=8001, help="Port to run agent on")
+    args = parser.parse_args()
+    uvicorn.run(app, host="0.0.0.0", port=args.port)
