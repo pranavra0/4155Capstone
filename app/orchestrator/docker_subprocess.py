@@ -119,7 +119,6 @@ class DockerSubprocessClient:
         cmd.extend(['--memory', '256m'])
         cmd.extend(['--cpus', '0.5'])
         cmd.extend(['--network', 'none'])
-        cmd.extend(['--read-only'])
         cmd.extend(['--security-opt', 'no-new-privileges'])
         cmd.extend(['--cap-drop', 'ALL'])
         if name:
