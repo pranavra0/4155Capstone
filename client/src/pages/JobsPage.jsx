@@ -1,10 +1,19 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 
+const ALLOWED_IMAGES = [
+  'python:3.11-slim', 'python:3.10-slim', 'python:3.9-slim',
+  'node:20-slim', 'node:18-slim',
+  'ruby:3.2-slim', 'golang:1.21-alpine', 'rust:slim',
+  'ubuntu:22.04', 'debian:bookworm-slim', 'alpine:3.18',
+  'nginx:alpine', 'redis:alpine', 'postgres:15-alpine',
+  'openjdk:17-slim', 'maven:3.9-eclipse-temurin-17',
+];
+
 export default function JobsPage() {
   const [jobs, setJobs] = useState([]);
   const [nodes, setNodes] = useState([]);
-  const [form, setForm] = useState({ image: "python:3.11-slim", command: "" });
+  const [form, setForm] = useState({ image: ALLOWED_IMAGES[0], command: "" });
   const [err, setErr] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -47,7 +56,7 @@ export default function JobsPage() {
         command: form.command || null,
         status: "pending"
       });
-      setForm({ image: "python:3.11-slim", command: "" });
+      setForm({ image: ALLOWED_IMAGES[0], command: "" });
       refresh();
     } catch (e) {
       setErr(String(e.message || e));
@@ -78,27 +87,27 @@ export default function JobsPage() {
         </p>
       )}
 
-      <form onSubmit={onCreate} className="form" style={{display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
-        <input
-          placeholder="Docker Image (e.g., python:3.11-slim, node:18, ubuntu)"
+      <form onSubmit={onCreate} className="form-grid" style={{gridTemplateColumns: '1fr 1fr auto'}}>
+        <select
           value={form.image}
           onChange={(e) => setForm({ ...form, image: e.target.value })}
-          className="input input-lg"
+          className="input"
           required
-        />
+        >
+          {ALLOWED_IMAGES.map(img => (
+            <option key={img} value={img}>{img}</option>
+          ))}
+        </select>
         <input
-          placeholder="Command (e.g., python -c 'print(123)')"
+          placeholder="Command (optional)"
           value={form.command}
           onChange={(e) => setForm({ ...form, command: e.target.value })}
-          className="input input-lg"
+          className="input"
         />
         <button type="submit" className="button" disabled={onlineNodes.length === 0 || submitting}>
           {submitting ? "Submitting..." : "Submit Job"}
         </button>
       </form>
-      <p style={{fontSize: '0.85em', color: '#666', marginTop: '0.5rem'}}>
-        Leave command empty to use image's default entrypoint
-      </p>
 
       {err && <div className="error">{err}</div>}
 

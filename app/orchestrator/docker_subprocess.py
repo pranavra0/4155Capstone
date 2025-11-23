@@ -1,6 +1,52 @@
-# Wrapper to use Docker CLI instead of Python SDK (Windows workaround)
 import subprocess
 import json
+import re
+
+ALLOWED_IMAGES = [
+    'python:3.11-slim', 'python:3.10-slim', 'python:3.9-slim',
+    'node:20-slim', 'node:18-slim',
+    'ruby:3.2-slim', 'golang:1.21-alpine', 'rust:slim',
+    'ubuntu:22.04', 'debian:bookworm-slim', 'alpine:3.18',
+    'nginx:alpine', 'redis:alpine', 'postgres:15-alpine',
+    'openjdk:17-slim', 'maven:3.9-eclipse-temurin-17',
+]
+
+BLOCKED_PATTERNS = [
+    r'--privileged', r'--net[=\s]*host', r'--network[=\s]*host', r'--pid[=\s]*host',
+    r'-v\s+/', r'--volume\s+/', r':/host', r':/etc', r':/var', r':/root', r':/proc', r':/sys',
+    r'rm\s+-rf\s+/', r'mkfs', r'dd\s+if=', r'chmod\s+777', r'chmod\s+\+s', r'chown',
+    r'/etc/shadow', r'/etc/passwd', r'/etc/sudoers',
+    r'curl.*\|.*sh', r'wget.*\|.*sh', r'curl.*\|.*bash', r'wget.*\|.*bash',
+    r'nc\s+-', r'ncat', r'/dev/tcp', r'/dev/udp',
+    r'python.*-c.*socket', r'python.*-c.*subprocess',
+    r'base64\s+-d', r'eval\s*\(', r'\.\./', r'/\.\.',
+    r'sudo', r'su\s+-', r'su\s+root',
+    r'apt\s+install', r'yum\s+install', r'apk\s+add',
+    r'pip\s+install', r'npm\s+install', r'gem\s+install',
+    r'crontab', r'/etc/cron', r'iptables', r'nmap', r'masscan',
+    r'mount\s+', r'umount\s+', r'docker\s+', r'kubectl',
+    r'ssh\s+', r'scp\s+', r'rsync\s+',
+    r'>\s*/etc/', r'>\s*/var/', r'>\s*/root/',
+    r'&>', r'2>&1.*>', r'xargs', r'find.*-exec',
+]
+
+
+class SecurityError(Exception):
+    pass
+
+
+def validate_image(image: str) -> None:
+    if image not in ALLOWED_IMAGES:
+        raise SecurityError(f"Image '{image}' not allowed")
+
+
+def validate_command(command: str) -> None:
+    if not command:
+        return
+    cmd_lower = command.lower()
+    for pattern in BLOCKED_PATTERNS:
+        if re.search(pattern, cmd_lower):
+            raise SecurityError("Command contains blocked pattern")
 
 
 class DockerSubprocessClient:
@@ -64,16 +110,23 @@ class DockerSubprocessClient:
         return container
 
     def containers_run(self, image, name=None, command=None, detach=True):
-        """Start a container with optional command"""
+        validate_image(image)
+        validate_command(command)
+
         cmd = ['docker', 'run']
         if detach:
             cmd.append('-d')
+        cmd.extend(['--memory', '256m'])
+        cmd.extend(['--cpus', '0.5'])
+        cmd.extend(['--network', 'none'])
+        cmd.extend(['--read-only'])
+        cmd.extend(['--security-opt', 'no-new-privileges'])
+        cmd.extend(['--cap-drop', 'ALL'])
         if name:
             cmd.extend(['--name', name])
         cmd.append(image)
-        # Add command at the end if provided
         if command:
-            cmd.extend(command.split())
+            cmd.extend(['sh', '-c', command])
 
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         if result.returncode != 0:
