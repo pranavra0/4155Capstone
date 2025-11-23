@@ -1,70 +1,42 @@
 // client/src/pages/ContainersPage.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { api } from "../lib/api";
 
 export default function ContainersPage() {
   const [items, setItems] = useState([]);
-  const [image, setImage] = useState("nginx:latest");
-  const [name, setName] = useState("web-1");
   const [err, setErr] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [fetching, setFetching] = useState(false);
+  const initialLoad = useRef(true);
 
   const refresh = () => {
-    setLoading(true);
+    if (!initialLoad.current) {
+      setFetching(true);
+    }
     setErr(null);
     api
-      .listContainers(false)
+      .listContainers(true)
       .then(setItems)
       .catch((e) => setErr(e.message))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setFetching(false);
+        initialLoad.current = false;
+      });
   };
 
   useEffect(() => {
     refresh();
+    const interval = setInterval(refresh, 5000);
+    return () => clearInterval(interval);
   }, []);
-
-  const onCreate = async (e) => {
-    e.preventDefault();
-    setErr(null);
-    try {
-      await api.createContainer({ image, name });
-      refresh();
-    } catch (e) {
-      setErr(String(e.message || e));
-    }
-  };
-
-  const onDelete = async (id) => {
-    setErr(null);
-    try {
-      await api.deleteContainer(id);
-      refresh();
-    } catch (e) {
-      setErr(String(e.message || e));
-    }
-  };
 
   return (
     <div className="page-container">
-      <h2>Containers</h2>
-
-      <form onSubmit={onCreate} className="form">
-        <input
-          value={image}
-          onChange={(e) => setImage(e.target.value)}
-          placeholder="Image (e.g. nginx:latest)"
-          className="input input-lg"
-        />
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Name (optional)"
-          className="input"
-        />
-        <button type="submit" className="button">
-          Start
-        </button>
-      </form>
+      <h2>Containers {fetching && <span style={{fontSize: '0.7em', color: '#888'}}>(refreshing...)</span>}</h2>
+      <p style={{fontSize: '0.9em', color: '#666', marginBottom: '1rem'}}>
+        All containers across orchestrator and agent nodes.
+      </p>
 
       {err && <div className="error">{err}</div>}
 
@@ -72,22 +44,23 @@ export default function ContainersPage() {
         <div className="loading-text">Loading…</div>
       ) : (
         <div className="card-list">
-          {items.map((c) => (
-            <div key={c.id} className="card">
-              <div className="card-info">
-                <code className="card-id">{c.id?.slice(0, 12)}</code>
-                <div className="card-main">{c.name ?? "(no name)"}</div>
-                <div className="card-sub">{c.image ?? ""}</div>
+          {items.length === 0 ? (
+            <p style={{color: '#888'}}>No containers running</p>
+          ) : (
+            items.map((c, idx) => (
+              <div key={`${c.node_id}-${c.id}-${idx}`} className="card">
+                <div className="card-info">
+                  <code className="card-id">{c.id?.slice(0, 12)}</code>
+                  <div className="card-main">{c.name ?? "(no name)"}</div>
+                  <div className="card-sub">{c.image ?? ""}</div>
+                  <div className="card-sub" style={{color: '#007bff'}}>
+                    Node: {c.node_id ?? "unknown"}
+                  </div>
+                </div>
+                <div className="card-status">{c.status ?? ""}</div>
               </div>
-              <div className="card-status">{c.status ?? ""}</div>
-              <button
-                onClick={() => onDelete(c.id)}
-                className="button button-danger button-sm"
-              >
-                Stop/Delete
-              </button>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       )}
     </div>

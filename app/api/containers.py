@@ -1,16 +1,18 @@
 # app/api/containers.py
 from __future__ import annotations
 
+import httpx
 from fastapi import APIRouter, HTTPException, Query
 from docker.errors import APIError, NotFound
 
 from orchestrator.container_manager import DockerUnavailable
 from orchestrator import container_manager
+from orchestrator.db import nodes_col
 
 router = APIRouter()
 
 
-def _serialize(c) -> dict:
+def _serialize(c, node_id: str = None) -> dict:
     """Convert a Docker SDK Container to a small, FE-friendly dict."""
     name = None
     try:
@@ -35,18 +37,42 @@ def _serialize(c) -> dict:
     except Exception:
         pass
 
-    return {"id": c.id, "name": name, "image": image, "status": status}
+    result = {"id": c.id, "name": name, "image": image, "status": status}
+    if node_id:
+        result["node_id"] = node_id
+    return result
 
 
 @router.get("/", summary="List Containers")
 @router.get("", summary="List Containers")
-async def list_containers(all: bool = Query(False, description="Include stopped/exited containers")):
-    """List all containers (async, non-blocking)"""
+async def list_containers(all: bool = Query(True, description="Include stopped/exited containers")):
+    all_containers = []
+
+    # Get local orchestrator containers
     try:
-        items = await container_manager.list_containers_async(all=all)
-        return [_serialize(c) for c in items]
-    except DockerUnavailable as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        local_items = await container_manager.list_containers_async(all=all)
+        for c in local_items:
+            container = _serialize(c, node_id="orchestrator")
+            all_containers.append(container)
+    except DockerUnavailable:
+        pass
+
+    # Get containers from all registered nodes
+    nodes = list(nodes_col.find())
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        for node in nodes:
+            try:
+                url = f"http://{node['ip']}:{node['port']}/containers?all={str(all).lower()}"
+                resp = await client.get(url)
+                if resp.status_code == 200:
+                    containers = resp.json()
+                    for c in containers:
+                        c["node_id"] = node["id"]
+                        all_containers.append(c)
+            except Exception:
+                pass
+
+    return all_containers
 
 
 @router.get("/{container_id}", summary="Get Container")
@@ -61,19 +87,14 @@ async def get_container(container_id: str):
         raise HTTPException(status_code=404, detail="Container not found")
 
 
-@router.post("/", summary="Create Container")
-@router.post("", summary="Create Container")
+@router.post("/", summary="Create Container (Disabled)")
+@router.post("", summary="Create Container (Disabled)")
 async def create_container(
     image: str = Query(..., description="Docker image (e.g. nginx:latest)"),
     name: str | None = Query(None, description="Container name"),
 ):
-    """Create and start a container (async, non-blocking)"""
-    try:
-        return await container_manager.start_container_async(image=image, name=name)
-    except DockerUnavailable as e:
-        raise HTTPException(status_code=503, detail=str(e))
-    except APIError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    """Disabled - use Jobs API for secure container orchestration"""
+    raise HTTPException(status_code=403, detail="Direct container creation disabled. Use Jobs API instead.")
 
 
 @router.delete("/{container_id}", summary="Stop/Delete Container")
